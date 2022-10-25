@@ -1,0 +1,21 @@
+FROM {{ jupyter.base_image }}:{{ jupyter.base_image_version }}
+
+USER root
+
+RUN apt-get update \
+    && apt-get install -yq --no-install-recommends \
+        apt-utils \
+        curl \
+        pkg-config \
+        software-properties-common \
+    && LANG=C.UTF-8 add-apt-repository -y ppa:ubuntugis/ppa \
+    && apt update
+
+USER jovyan
+RUN pip3 install ipyleaflet && \
+    pip3 install pandas && \
+    conda install geopandas -y
+
+{% for package in python.pip_common %}
+RUN pip3 install {{ package }}
+{% endfor %}

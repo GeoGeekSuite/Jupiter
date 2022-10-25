@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+       app: jupyter
+  template:
+    metadata:
+      labels:
+        app: jupyter
+    spec:
+      containers:
+        - name: jupyter
+{% if repository is undefined %}
+          image: 'gisjupyter:{{ jupyter.ggs_version }}'
+{% else %}
+          image: '{{ local_registry.repository }}/gisjupyter:{{ jupyter.ggs_version }}'
+{% endif %}
+          env:
+          - name: JUPYTER_ENABLE_LAB
+            value: "yes"
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: pg-secret
+                key: PGPASSWORD
+          - name: PYTHONPATH
+            value: /opt/cobra-python-packages
+          - name: LOG_LEVEL
+            value: DEBUG
+## PG Environment variables
+          - name: PGHOST
+            value: postgres
+          - name: PGPORT
+            value: '5432'
+          - name: PGDATABASE
+            value: postgres
+          - name: PGUSER
+            value: postgres
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: pg-secret
+                key: PGPASSWORD
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 8888
+          command: ["start-notebook.sh"]
+          args: ["--NotebookApp.token={{ password }}"]
+          #envFrom:
+          #  - configMapRef:
+          #      name: postgres-config
+          volumeMounts:
+            - mountPath: /home/jovyan
+              name: jupyter
+            - mountPath: /opt/cobra-python-packages
+              name: devlibs
+            - mountPath: /download
+              name: download
+            - mountPath: /styles
+              name: styles
+            - mountPath: /export
+              name: export
+      volumes:
+        - name: jupyter
+          persistentVolumeClaim:
+            claimName: jupyter-claim
+        - name: devlibs
+          hostPath:
+            path: '{{ local_lib_path }}/python'
+            type: DirectoryOrCreate
+        - name: download
+          persistentVolumeClaim:
+            claimName: download-claim
+        - name: styles
+          persistentVolumeClaim:
+            claimName: styles-claim
+        - name: export
+          persistentVolumeClaim:
+            claimName: export-claim
