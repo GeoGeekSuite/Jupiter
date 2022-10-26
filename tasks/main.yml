@@ -8,6 +8,13 @@
     group: '{{ ansible_user }}'
   become: true
   #TODO: Should be possible without become
+- name: Create folder for local python libraries
+  file:
+    path: '{{ local_python_library }}'
+    state: directory
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
+  become: true
 - name: Render Jupyer Image
   template:
     src: Dockerfile.j2
@@ -16,14 +23,15 @@
   shell:
     cmd: 'podman image build . -t gisjupyter:{{ jupyter.ggs_version }}'
     chdir: '{{ container_images }}/jupyter'
+- name: Debug Image publication
+  debug:
+    msg: 'Tag and push to: {{ local_registry.url }}:{{ local_registry.port }}/{{ local_registry.repository }}/gisjupyter:{{ jupyter.ggs_version }}'
 - name: Tag image (repo only)
   shell:
     cmd: 'podman tag gisjupyter:{{ jupyter.ggs_version }} {{ local_registry.url }}:{{ local_registry.port }}/{{ local_registry.repository }}/gisjupyter:{{ jupyter.ggs_version }}'
-  when: repository is defined
 - name: Push Image to repo 
   shell:
-    cmd: 'podman push {{ local_registry.url }}:{{ local_registry.port }}/{{ local_registry.repository }}/gisjupyter:{{ jupyter.ggs_version }}'
-  when: repository is defined
+    cmd: 'podman push {{ local_registry.url }}:{{ local_registry.port }}/{{ local_registry.repository }}/gisjupyter:{{ jupyter.ggs_version }} --tls-verify=false'
 - name: Render Jupyter Manifest
   template:
     src: jupyter_deployment.j2.yaml
@@ -35,15 +43,14 @@
   ignore_errors: true
 - name: Create Jupyter Deployment
   shell:
-    cmd: 'kubectl create -f jupyter_deployment.yaml -n {{ gisnamespace }}'
+    cmd: 'kubectl apply -f jupyter_deployment.yaml -n {{ gisnamespace }}'
     chdir: '{{ manifest_folder }}'
-  ignore_errors: true
 - name: Render Jupyter Service
   template:
     src: jupyter_service.j2.yaml
     dest: '{{ manifest_folder }}/jupyter_service.yaml'
 - name: Create Jupyter Service
   shell:
-    cmd: 'kubectl create -f jupyter_service.yaml -n {{ gisnamespace }}'
+    cmd: 'kubectl apply -f jupyter_service.yaml -n {{ gisnamespace }}'
     chdir: '{{ manifest_folder }}'
   ignore_errors: true

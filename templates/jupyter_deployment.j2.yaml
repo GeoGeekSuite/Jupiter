@@ -14,11 +14,7 @@ spec:
     spec:
       containers:
         - name: jupyter
-{% if repository is undefined %}
-          image: 'gisjupyter:{{ jupyter.ggs_version }}'
-{% else %}
-          image: '{{ local_registry.repository }}/gisjupyter:{{ jupyter.ggs_version }}'
-{% endif %}
+          image: '{{ local_registry.url }}:{{local_registry.port}}/{{ local_registry.repository }}/gisjupyter:{{ jupyter.ggs_version }}'
           env:
           - name: JUPYTER_ENABLE_LAB
             value: "yes"
@@ -49,7 +45,7 @@ spec:
           ports:
             - containerPort: 8888
           command: ["start-notebook.sh"]
-          args: ["--NotebookApp.token={{ password }}"]
+          args: ["--NotebookApp.token={{ user.admin.password }}"]
           #envFrom:
           #  - configMapRef:
           #      name: postgres-config
@@ -70,7 +66,7 @@ spec:
             claimName: jupyter-claim
         - name: devlibs
           hostPath:
-            path: '{{ local_lib_path }}/python'
+            path: '{{ local_python_library }}'
             type: DirectoryOrCreate
         - name: download
           persistentVolumeClaim:
