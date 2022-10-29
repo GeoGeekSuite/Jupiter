@@ -11,11 +11,8 @@ RUN apt-get update \
     && LANG=C.UTF-8 add-apt-repository -y ppa:ubuntugis/ppa \
     && apt update
 
-#USER jovyan
-#RUN pip3 install ipyleaflet && \
-#    pip3 install pandas && #\
-#    conda install geopandas -y
+USER jovyan
 
-#{% for package in python.pip_common %}
-#RUN pip3 install {{ package }}
-#{% endfor %}
+RUN pip3 install psycopg2-binary
+
+
