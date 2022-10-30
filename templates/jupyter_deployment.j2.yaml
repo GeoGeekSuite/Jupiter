@@ -27,6 +27,8 @@ spec:
             value: /opt/cobra-python-packages
           - name: LOG_LEVEL
             value: DEBUG
+          - name: LOG_TARGET
+            value: print
 ## PG Environment variables
           - name: PGHOST
             value: postgres
