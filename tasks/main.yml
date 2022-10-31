@@ -54,3 +54,4 @@
     cmd: 'kubectl apply -f jupyter_service.yaml -n {{ gisnamespace }}'
     chdir: '{{ manifest_folder }}'
   ignore_errors: true
+  
